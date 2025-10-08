@@ -2,8 +2,8 @@ rule prepare_RiboNN_data:
     output:
         os.path.join(DATA_DIR, "{dataset}.csv")
     params:
-        url=lambda wildcards: DATASETS[wildcards.dataset]['url'],
-        sheet_name=lambda wildcards: DATASETS[wildcards.dataset]['sheet_name']
+        url=lambda wildcards: RIBONN_DATASETS[wildcards.dataset]['url'],
+        sheet_name=lambda wildcards: RIBONN_DATASETS[wildcards.dataset]['sheet_name']
     conda:
         "../envs/RiboNN.yaml"
     log:

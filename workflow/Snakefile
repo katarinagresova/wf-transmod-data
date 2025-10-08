@@ -9,10 +9,10 @@ else:
 
 DATA_DIR = config["DATA_DIR"]
 LOG_DIR = config["LOG_DIR"]
-DATASETS = config["DATASETS"]
+RIBONN_DATASETS = config["RIBONN_DATASETS"]
 
 include: "rules/RiboNN_data.smk"
 
 rule all:
     input: 
-        expand(os.path.join(DATA_DIR, "{dataset}.csv"), dataset=DATASETS.keys())
+        expand(os.path.join(DATA_DIR, "{dataset}.csv"), dataset=RIBONN_DATASETS.keys())

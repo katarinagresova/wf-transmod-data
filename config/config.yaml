@@ -1,7 +1,7 @@
 DATA_DIR: "data"
 LOG_DIR: "logs"
 
-DATASETS:
+RIBONN_DATASETS:
   RiboNN_Human:
     url: https://static-content.springer.com/esm/art%3A10.1038%2Fs41587-025-02712-x/MediaObjects/41587_2025_2712_MOESM3_ESM.xlsx
     sheet_name: "Human"
