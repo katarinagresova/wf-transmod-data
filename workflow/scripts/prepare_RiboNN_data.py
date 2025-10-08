@@ -22,6 +22,46 @@ def set_logging(log_file, log_level):
     _log.addHandler(ch)
     _log.addHandler(fh)
 
+def extract_cds_sequence(row):
+    """
+    Extract the CDS sequence from a DataFrame row.
+
+    Parameters:
+    row (pd.Series): A row from a pandas DataFrame containing 'tx_sequence', 'utr5_size', and 'cds_size'.
+
+    Returns:
+    str: The extracted CDS sequence.
+    """
+    start = row['utr5_size']
+    end = start + row['cds_size']
+    return row['tx_sequence'][start:end]
+
+def extract_utr5_sequence(row):
+    """
+    Extract the 5' UTR sequence from a DataFrame row.
+
+    Parameters:
+    row (pd.Series): A row from a pandas DataFrame containing 'tx_sequence' and 'utr5_size'.
+
+    Returns:
+    str: The extracted 5' UTR sequence.
+    """
+    end = row['utr5_size']
+    return row['tx_sequence'][:end]
+
+def extract_utr3_sequence(row):
+    """
+    Extract the 3' UTR sequence from a DataFrame row.
+
+    Parameters:
+    row (pd.Series): A row from a pandas DataFrame containing 'tx_sequence', 'utr5_size', and 'cds_size'.
+
+    Returns:
+    str: The extracted 3' UTR sequence.
+    """
+    start = row['utr5_size'] + row['cds_size']
+    return row['tx_sequence'][start:]
+
 def main():
     parser = argparse.ArgumentParser(
         description="Prepare RiboNN data from Excel files.")
@@ -31,6 +71,8 @@ def main():
                         help="Sheet name in the Excel file.")
     parser.add_argument("--output", "-o", required=True,
                         help="Path to the output CSV file.")
+    parser.add_argument("--add_seqs", action="store_true",
+                        help="Whether to add sequence columns (utr5_seq, cds_seq, utr3_seq).")
     parser.add_argument("--log_file", "-l", default="prepare_RiboNN_data.log",
                         help="Path to the log file.")
     parser.add_argument("--log_level", default="INFO",
@@ -89,6 +131,12 @@ def main():
         else:
             _log.warning(f"Column '{col}' not found in the data.")
 
+    if args.add_seqs:
+        df['cds_seq'] = df.apply(extract_cds_sequence, axis=1)
+        df['utr5_seq'] = df.apply(extract_utr5_sequence, axis=1)
+        df['utr3_seq'] = df.apply(extract_utr3_sequence, axis=1)
+        _log.info("Added 'cds_seq', 'utr5_seq', and 'utr3_seq' columns.")
+
     # save dataframe to csv
     try:
         df.to_csv(args.output, index=False)
@@ -109,6 +157,8 @@ if __name__ == "__main__":
         ]
         if hasattr(snakemake.params, 'log_level'):
             args += ["--log_level", snakemake.params.log_level]
+        if hasattr(snakemake.params, 'add_seqs') and snakemake.params.add_seqs:
+            args.append("--add_seqs")
         sys.argv[1:] = args
         main()
     else:
