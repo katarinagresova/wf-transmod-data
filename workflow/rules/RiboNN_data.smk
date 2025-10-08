@@ -10,7 +10,7 @@ rule prepare_RiboNN_data:
         os.path.join(LOG_DIR, "prepare_RiboNN_data_{dataset}.log")
     shell:
         """
-        python {workflow.basedir}/scripts/prepare_RiboNN_data.py \
+        python ../scripts/prepare_RiboNN_data.py \
             --url {params.url} \
             --sheet_name {params.sheet_name} \
             --output {output} \
