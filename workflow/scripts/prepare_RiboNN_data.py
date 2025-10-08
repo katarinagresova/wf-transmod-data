@@ -98,8 +98,9 @@ def main():
 
 if __name__ == "__main__":
     # handle both script and snakemake execution
-    if 'snakemake' in sys.modules:
+    if 'snakemake' in globals():
         # snakemake execution
+        from snakemake.script import snakemake
         args = [
             "--url", snakemake.params.url,
             "--sheet_name", snakemake.params.sheet_name,
