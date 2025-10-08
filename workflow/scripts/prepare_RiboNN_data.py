@@ -3,6 +3,8 @@ import requests
 import argparse
 import logging
 import os
+import sys
+import snakemake
 
 _log = logging.getLogger("prepare_RiboNN_data")
 
@@ -96,4 +98,19 @@ def main():
         _log.error(f"Error saving CSV file: {e}")
 
 if __name__ == "__main__":
-    main()
+    # handle both script and snakemake execution
+    if 'snakemake' in sys.modules:
+        # snakemake execution
+        args = [
+            "--url", snakemake.params.url,
+            "--sheet_name", snakemake.params.sheet_name,
+            "--output", snakemake.output[0],
+            "--log_file", snakemake.log[0]
+        ]
+        if hasattr(snakemake.params, 'log_level'):
+            args += ["--log_level", snakemake.params.log_level]
+        sys.argv[1:] = args
+        main()
+    else:
+        # script execution
+        main()

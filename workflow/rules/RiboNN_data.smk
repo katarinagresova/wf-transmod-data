@@ -8,12 +8,5 @@ rule prepare_RiboNN_data:
         "../envs/RiboNN.yaml"
     log:
         os.path.join(LOG_DIR, "prepare_RiboNN_data_{dataset}.log")
-    shell:
-        """
-        python ../scripts/prepare_RiboNN_data.py \
-            --url {params.url} \
-            --sheet_name {params.sheet_name} \
-            --output {output} \
-            --log_file {log} \
-            --log_level DEBUG
-        """
+    script:
+        "../scripts/prepare_RiboNN_data.py"
