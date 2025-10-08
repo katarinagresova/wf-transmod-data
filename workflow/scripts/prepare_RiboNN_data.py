@@ -4,7 +4,6 @@ import argparse
 import logging
 import os
 import sys
-import snakemake
 
 _log = logging.getLogger("prepare_RiboNN_data")
 
