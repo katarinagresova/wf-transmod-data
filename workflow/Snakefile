@@ -13,6 +13,11 @@ RIBONN_DATASETS = config["RIBONN_DATASETS"]
 
 include: "rules/RiboNN_data.smk"
 
-rule all:
-    input: 
+rule process_ribonn_data:
+    input:
         expand(os.path.join(DATA_DIR, "{dataset}.csv"), dataset=RIBONN_DATASETS.keys())
+
+
+rule all:
+    input:
+        process_ribonn_data.input
