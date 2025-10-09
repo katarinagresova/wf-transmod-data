@@ -20,4 +20,4 @@ rule process_ribonn_data:
 
 rule all:
     input:
-        rules.process_ribonn_data.input
+        expand(os.path.join(DATA_DIR, "{dataset}.csv"), dataset=RIBONN_DATASETS.keys())
