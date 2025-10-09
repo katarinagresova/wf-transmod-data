@@ -20,4 +20,4 @@ rule process_ribonn_data:
 
 rule all:
     input:
-        process_ribonn_data.input
+        rules.process_ribonn_data.input
