@@ -132,10 +132,10 @@ def main():
             _log.warning(f"Column '{col}' not found in the data.")
 
     if args.add_seqs:
-        df['cds_seq'] = df.apply(extract_cds_sequence, axis=1)
-        df['utr5_seq'] = df.apply(extract_utr5_sequence, axis=1)
-        df['utr3_seq'] = df.apply(extract_utr3_sequence, axis=1)
-        _log.info("Added 'cds_seq', 'utr5_seq', and 'utr3_seq' columns.")
+        df['cds_sequence'] = df.apply(extract_cds_sequence, axis=1)
+        df['utr5_sequence'] = df.apply(extract_utr5_sequence, axis=1)
+        df['utr3_sequence'] = df.apply(extract_utr3_sequence, axis=1)
+        _log.info("Added 'cds_sequence', 'utr5_sequence', and 'utr3_sequence' columns.")
 
     # save dataframe to csv
     try:
