@@ -4,6 +4,7 @@ import argparse
 import logging
 import os
 import sys
+from transmod.data.utils import extract_cds_sequence, extract_utr5_sequence, extract_utr3_sequence
 
 _log = logging.getLogger("prepare_RiboNN_data")
 
@@ -21,46 +22,6 @@ def set_logging(log_file, log_level):
     # add the handlers to logger
     _log.addHandler(ch)
     _log.addHandler(fh)
-
-def extract_cds_sequence(row):
-    """
-    Extract the CDS sequence from a DataFrame row.
-
-    Parameters:
-    row (pd.Series): A row from a pandas DataFrame containing 'tx_sequence', 'utr5_size', and 'cds_size'.
-
-    Returns:
-    str: The extracted CDS sequence.
-    """
-    start = row['utr5_size']
-    end = start + row['cds_size']
-    return row['tx_sequence'][start:end]
-
-def extract_utr5_sequence(row):
-    """
-    Extract the 5' UTR sequence from a DataFrame row.
-
-    Parameters:
-    row (pd.Series): A row from a pandas DataFrame containing 'tx_sequence' and 'utr5_size'.
-
-    Returns:
-    str: The extracted 5' UTR sequence.
-    """
-    end = row['utr5_size']
-    return row['tx_sequence'][:end]
-
-def extract_utr3_sequence(row):
-    """
-    Extract the 3' UTR sequence from a DataFrame row.
-
-    Parameters:
-    row (pd.Series): A row from a pandas DataFrame containing 'tx_sequence', 'utr5_size', and 'cds_size'.
-
-    Returns:
-    str: The extracted 3' UTR sequence.
-    """
-    start = row['utr5_size'] + row['cds_size']
-    return row['tx_sequence'][start:]
 
 def main():
     parser = argparse.ArgumentParser(
