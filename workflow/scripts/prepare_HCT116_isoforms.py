@@ -265,7 +265,7 @@ def main():
     )
 
     _log.info(f"Writing output TSV to {args.out_tsv} with {len(out_df)} transcripts")
-    out_df.to_csv(args.out_tsv, index=False)
+    out_df.to_csv(args.out_tsv, index=False, sep='\t')
 
 
 if __name__ == "__main__":
