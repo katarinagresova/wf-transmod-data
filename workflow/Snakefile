@@ -10,9 +10,27 @@ else:
 DATA_DIR = config["DATA_DIR"]
 LOG_DIR = config["LOG_DIR"]
 RIBONN_DATASETS = config["RIBONN_DATASETS"]
+HCT116_ISOFORMS = config["HCT116_ISOFORMS"]
 
 include: "rules/RiboNN_data.smk"
 
 rule all:
     input: 
-        expand(os.path.join(DATA_DIR, "{dataset}.csv"), dataset=RIBONN_DATASETS.keys())
+        expand(os.path.join(DATA_DIR, "{dataset}.csv"), dataset=RIBONN_DATASETS.keys()),
+        os.path.join(DATA_DIR, "HCT116_isoforms.tsv")
+
+
+rule prepare_HCT116_isoforms:
+    input:
+        gtf=HCT116_ISOFORMS['gtf'],
+        fasta=HCT116_ISOFORMS['fasta']
+    output:
+        os.path.join(DATA_DIR, "HCT116_isoforms.tsv")
+    params:
+        emit_utrs_without_cds=True
+    conda:
+        "envs/HCT116.yaml"
+    log:
+        os.path.join(LOG_DIR, "prepare_HCT116_isoforms.log")
+    script:
+        "scripts/prepare_HCT116_isoforms.py"
