@@ -10,3 +10,7 @@ RIBONN_DATASETS:
     url: https://static-content.springer.com/esm/art%3A10.1038%2Fs41587-025-02712-x/MediaObjects/41587_2025_2712_MOESM4_ESM.xlsx
     sheet_name: "Mouse"
     add_seqs: True
+
+HCT116_ISOFORMS:
+  gtf: /fast/AG_Ohler/gabriel/eif_newpipe/resources/HCT116_Txome_WT.v1.0.sort.gtf
+  fasta: /fast/AG_Ohler/gabriel/eif_newpipe/resources/HCT116_Txome_WT.v1.0.sort.fa

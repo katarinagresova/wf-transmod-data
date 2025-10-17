@@ -1,0 +1,9 @@
+name: HCT116
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pandas
+  - biopython
+  - pyranges
