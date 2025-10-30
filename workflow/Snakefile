@@ -17,7 +17,7 @@ include: "rules/RiboNN_data.smk"
 rule all:
     input: 
         expand(os.path.join(DATA_DIR, "{dataset}.csv"), dataset=RIBONN_DATASETS.keys()),
-        os.path.join(DATA_DIR, "HCT116_isoforms.tsv")
+        os.path.join(DATA_DIR, "HCT116_isoforms.csv")
 
 
 rule prepare_HCT116_isoforms:
@@ -26,7 +26,7 @@ rule prepare_HCT116_isoforms:
         fasta=HCT116_ISOFORMS['fasta'],
         logTE=HCT116_ISOFORMS['logTE']
     output:
-        os.path.join(DATA_DIR, "HCT116_isoforms.tsv")
+        os.path.join(DATA_DIR, "HCT116_isoforms.csv")
     params:
         emit_utrs_without_cds=True
     conda:

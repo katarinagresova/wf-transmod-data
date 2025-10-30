@@ -60,7 +60,7 @@ def collect_annotations(df, tx_col='transcript_id', features_of_interest=None):
         strand_vals = grp['Strand'].dropna().unique()
         # if multiple strands, warn and pick the first
         if len(strand_vals) > 1:
-            _log.Warning(f"Transcript {tx_id} has multiple strands {strand_vals}; using the first.")
+            _log.warning(f"Transcript {tx_id} has multiple strands {strand_vals}; using the first.")
         strand = strand_vals[0] if len(strand_vals) > 0 else '+'
 
         # collect and sort exons by genomic start
@@ -195,7 +195,7 @@ def main():
     parser.add_argument("--gtf", required=True, help="Input GTF file")
     parser.add_argument("--fasta", required=True, help="Input transcriptome FASTA file")
     parser.add_argument("--logTE", required=True, help="Input logTE file")
-    parser.add_argument("--out_tsv", required=True, help="Output TSV file with transcript sequences ")
+    parser.add_argument("--out_tsv", required=True, help="Output CSV file with transcript sequences ")
     parser.add_argument("--log_file", required=False, help="Log file path", default="prepare_HCT116_isoforms.log")
     parser.add_argument("--log_level", required=False, default="INFO")
     parser.add_argument("--emit-utrs-without-cds", dest="emit_utrs_without_cds", action="store_true",
@@ -280,15 +280,14 @@ def main():
     out_df = out_df.merge(master_df_pivot, how='left', left_on='transcript_id', right_on='Name')
     out_df.drop(columns=['Name'], inplace=True)
 
-    _log.info(f"Writing output TSV to {args.out_tsv} with {len(out_df)} transcripts")
-    out_df.to_csv(args.out_tsv, index=False, sep='\t')
+    _log.info(f"Writing output CSV to {args.out_tsv} with {len(out_df)} transcripts")
+    out_df.to_csv(args.out_tsv, index=False, sep=',')
 
 
 if __name__ == "__main__":
     # handle both script and snakemake execution
     if 'snakemake' in globals():
         # snakemake execution
-        from snakemake.script import snakemake
         args = [
             "--gtf", snakemake.input.gtf,
             "--fasta", snakemake.input.fasta,
