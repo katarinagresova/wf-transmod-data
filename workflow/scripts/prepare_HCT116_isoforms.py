@@ -194,6 +194,7 @@ def main():
         description="Enrich GTF with transcript coordinates and add utr5/utr3 features")
     parser.add_argument("--gtf", required=True, help="Input GTF file")
     parser.add_argument("--fasta", required=True, help="Input transcriptome FASTA file")
+    parser.add_argument("--logTE", required=True, help="Input logTE file")
     parser.add_argument("--out_tsv", required=True, help="Output TSV file with transcript sequences ")
     parser.add_argument("--log_file", required=False, help="Log file path", default="prepare_HCT116_isoforms.log")
     parser.add_argument("--log_level", required=False, default="INFO")
@@ -264,6 +265,21 @@ def main():
         ]
     )
 
+    sep = '\t' if args.logTE.endswith('.tsv') else ','
+    log2TE_df = pd.read_csv(args.logTE, index_col=0, sep=sep)
+    _log.info(f"Loaded log2TE data with {len(log2TE_df)} transcripts from {args.logTE}")
+
+    master_df_pivot = log2TE_df.pivot_table(index='Name', 
+                                         columns='experiment_time', 
+                                         values=['log2TE_minusAux_rep1', 'log2TE_minusAux_rep2', 'log2TE_minusAux_rep3', "log2TE_plusAux_rep1", "log2TE_plusAux_rep2", "log2TE_plusAux_rep3"],)
+    master_df_pivot.columns = [f"{col[0]}_{col[1]}" for col in master_df_pivot.columns]
+    master_df_pivot.reset_index(inplace=True)
+    _log.info(f"Using log2TE data for {len(master_df_pivot)} transcripts after pivoting")
+
+    # merge log2TE data into output dataframe matching on transcript_id, use NaN for missing log2TE values
+    out_df = out_df.merge(master_df_pivot, how='left', left_on='transcript_id', right_on='Name')
+    out_df.drop(columns=['Name'], inplace=True)
+
     _log.info(f"Writing output TSV to {args.out_tsv} with {len(out_df)} transcripts")
     out_df.to_csv(args.out_tsv, index=False, sep='\t')
 
@@ -276,6 +292,7 @@ if __name__ == "__main__":
         args = [
             "--gtf", snakemake.input.gtf,
             "--fasta", snakemake.input.fasta,
+            "--logTE", snakemake.input.logTE,
             "--out_tsv", snakemake.output[0],
             "--log_file", snakemake.log[0]
         ]

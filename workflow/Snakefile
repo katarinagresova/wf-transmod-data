@@ -23,7 +23,8 @@ rule all:
 rule prepare_HCT116_isoforms:
     input:
         gtf=HCT116_ISOFORMS['gtf'],
-        fasta=HCT116_ISOFORMS['fasta']
+        fasta=HCT116_ISOFORMS['fasta'],
+        logTE=HCT116_ISOFORMS['logTE']
     output:
         os.path.join(DATA_DIR, "HCT116_isoforms.tsv")
     params:
