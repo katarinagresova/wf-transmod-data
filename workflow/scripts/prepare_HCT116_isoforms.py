@@ -83,7 +83,7 @@ def collect_annotations(df, tx_col='transcript_id', features_of_interest=None):
         tpos = 0
         for exon in exons:
             gs, ge = exon['start'], exon['end']
-            exon_len = ge - gs + 1
+            exon_len = ge - gs
             exon['tx_start'] = tpos
             exon['tx_end'] = tpos + exon_len  # exclusive
             tpos += exon_len
@@ -127,7 +127,7 @@ def collect_annotations(df, tx_col='transcript_id', features_of_interest=None):
 
             # ensure ordering: transcript coordinates should have start <= end; use min/max
             cds_tx_start = int(min(tx_a, tx_b))
-            cds_tx_end = int(max(tx_a, tx_b)) + 1  # make end exclusive
+            cds_tx_end = int(max(tx_a, tx_b))
             cds_list.append({'start': cds_gstart, 'end': cds_gend, 'tx_start': cds_tx_start, 'tx_end': cds_tx_end})
         cds_by_tx[tx_id] = cds_list
 
@@ -170,7 +170,7 @@ def build_transcript_row(tx_id, sequences, cds_by_tx):
         }
 
     # convert inclusive end to exclusive end for python slicing
-    cds_end = cds_end + 1
+    cds_end = cds_end
 
     cds_seq = tx_seq[cds_start:cds_end]
     utr5_seq = tx_seq[:cds_start]
