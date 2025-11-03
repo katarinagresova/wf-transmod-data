@@ -261,7 +261,8 @@ def main():
             'utr5_length', 
             'GENCODE_gene_id', 
             'GENCODE_transcript_id', 
-            'gene_name'
+            'gene_name',
+            'transcript_biotype'
         ]
     )
 
