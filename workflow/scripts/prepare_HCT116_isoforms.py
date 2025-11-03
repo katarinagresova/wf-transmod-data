@@ -281,6 +281,9 @@ def main():
         ]
     )
 
+    # rename column 'transcript_id' to 'tx_id'
+    out_df.rename(columns={'transcript_id': 'tx_id'}, inplace=True)
+
     sep = '\t' if args.logTE.endswith('.tsv') else ','
     log2TE_df = pd.read_csv(args.logTE, index_col=0, sep=sep)
     _log.info(f"Loaded log2TE data with {len(log2TE_df)} transcripts from {args.logTE}")
@@ -292,8 +295,8 @@ def main():
     master_df_pivot.reset_index(inplace=True)
     _log.info(f"Using log2TE data for {len(master_df_pivot)} transcripts after pivoting")
 
-    # merge log2TE data into output dataframe matching on transcript_id, use NaN for missing log2TE values
-    out_df = out_df.merge(master_df_pivot, how='left', left_on='transcript_id', right_on='Name')
+    # merge log2TE data into output dataframe matching on tx_id, use NaN for missing log2TE values
+    out_df = out_df.merge(master_df_pivot, how='left', left_on='tx_id', right_on='Name')
     out_df.drop(columns=['Name'], inplace=True)
 
     _log.info(f"Writing output CSV to {args.out_tsv} with {len(out_df)} transcripts")
