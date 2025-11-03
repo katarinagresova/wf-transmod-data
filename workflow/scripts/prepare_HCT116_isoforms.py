@@ -241,10 +241,12 @@ def main():
             row['GENCODE_gene_id'] = meta.get('GENCODE_gene_id', None)
             row['GENCODE_transcript_id'] = meta.get('GENCODE_transcript_id', None)
             row['gene_name'] = meta.get('gene_name', None)
+            row['transcript_biotype'] = meta.get('transcript_biotype', None)
         else:
             row['GENCODE_gene_id'] = None
             row['GENCODE_transcript_id'] = None
             row['gene_name'] = None
+            row['transcript_biotype'] = None
         rows.append(row)
 
     out_df = pd.DataFrame(
