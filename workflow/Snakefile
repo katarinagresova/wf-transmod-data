@@ -28,7 +28,7 @@ rule prepare_HCT116_isoforms:
     output:
         os.path.join(DATA_DIR, "HCT116_isoforms.csv")
     params:
-        emit_utrs_without_cds=True
+        emit_utrs_without_cds=HCT116_ISOFORMS['emit_utrs_without_cds']
     conda:
         "envs/HCT116.yaml"
     log:

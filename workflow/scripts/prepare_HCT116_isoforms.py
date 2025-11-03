@@ -236,6 +236,13 @@ def main():
             # sequence missing in FASTA or cannot build
             _log.warning(f"Could not build transcript row for {tx_id}; skipping.")
             continue
+
+        if not args.emit_utrs_without_cds:
+            # skip transcripts without CDS
+            if row['cds_length'] == 0:
+                _log.info(f"Skipping transcript {tx_id} without CDS as per --emit-utrs-without-cds flag.")
+                continue
+
         # Attach metadata if available (use .loc only when present to avoid KeyError)
         if tx_id in transcript_meta.index:
             meta = transcript_meta.loc[tx_id]
