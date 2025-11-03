@@ -227,13 +227,14 @@ def main():
         _log.warning(f"Transcripts with exon annotations missing in FASTA: {len(missing_in_fasta)}")
 
     transcript_meta = gtf[gtf['Feature'] == 'transcript'].set_index('transcript_id')[[
-        'GENCODE_gene_id', 'GENCODE_transcript_id', 'gene_name'
+        'GENCODE_gene_id', 'GENCODE_transcript_id', 'gene_name', 'transcript_biotype'
     ]]
     rows = []
     for tx_id in transcripts_to_process:
         row = build_transcript_row(tx_id, sequences, cds_bounds_by_tx)
         if row is None:
             # sequence missing in FASTA or cannot build
+            _log.warning(f"Could not build transcript row for {tx_id}; skipping.")
             continue
         # Attach metadata if available (use .loc only when present to avoid KeyError)
         if tx_id in transcript_meta.index:
