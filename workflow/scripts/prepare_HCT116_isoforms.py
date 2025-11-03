@@ -230,6 +230,7 @@ def main():
         'GENCODE_gene_id', 'GENCODE_transcript_id', 'gene_name', 'transcript_biotype'
     ]]
     rows = []
+    no_cds_count = 0
     for tx_id in transcripts_to_process:
         row = build_transcript_row(tx_id, sequences, cds_bounds_by_tx)
         if row is None:
@@ -240,7 +241,8 @@ def main():
         if not args.emit_utrs_without_cds:
             # skip transcripts without CDS
             if row['cds_length'] == 0:
-                _log.info(f"Skipping transcript {tx_id} without CDS as per --emit-utrs-without-cds flag.")
+                no_cds_count += 1
+                _log.debug(f"Skipping transcript {tx_id} without CDS as per --emit-utrs-without-cds flag.")
                 continue
 
         # Attach metadata if available (use .loc only when present to avoid KeyError)
@@ -256,6 +258,9 @@ def main():
             row['gene_name'] = None
             row['transcript_biotype'] = None
         rows.append(row)
+
+    if no_cds_count > 0:
+        _log.info(f"Skipped {no_cds_count} transcripts without CDS as per --emit-utrs-without-cds flag.")
 
     out_df = pd.DataFrame(
         rows, 
