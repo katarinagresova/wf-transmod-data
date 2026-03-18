@@ -14,5 +14,5 @@ RIBONN_DATASETS:
 HCT116_ISOFORMS:
   gtf: /fast/AG_Ohler/gabriel/eif_newpipe/resources/HCT116_Txome_WT.v1.0.sort.gtf
   fasta: /fast/AG_Ohler/gabriel/eif_newpipe/resources/HCT116_Txome_WT.v1.0.sort.fa
-  logTE: /data/ohler/frederick/eIF/results/20251028-eif-master-autopipe.csv
-  emit_utrs_without_cds: False
+  logTE: /fast/AG_Ohler/frederick/projects/eIF/results/20260317-eif-master.csv
+  emit_utrs_without_cds: True

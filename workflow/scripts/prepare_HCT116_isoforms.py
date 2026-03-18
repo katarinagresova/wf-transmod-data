@@ -275,9 +275,12 @@ def main():
             'cds_length', 
             'utr5_length', 
             'GENCODE_gene_id', 
+            'GENCODE_gene_name',
             'GENCODE_transcript_id', 
             'gene_name',
-            'transcript_biotype'
+            'transcript_biotype',
+            'structural_category',
+            'transcript_name'
         ]
     )
 
@@ -288,15 +291,18 @@ def main():
     log2TE_df = pd.read_csv(args.logTE, index_col=0, sep=sep)
     _log.info(f"Loaded log2TE data with {len(log2TE_df)} transcripts from {args.logTE}")
 
+    # set values to all columns starting with `log2TE`, `padj`, `ribo_tpm` or `rna_tpm`
+    values = [col for col in log2TE_df.columns if col.startswith('log2TE') or col.startswith('padj') or col.startswith('ribo_tpm') or col.startswith('rna_tpm')]
+
     master_df_pivot = log2TE_df.pivot_table(index='Name', 
-                                         columns='experiment_time', 
-                                         values=['log2TE_minusAux_rep1', 'log2TE_minusAux_rep2', 'log2TE_minusAux_rep3', "log2TE_plusAux_rep1", "log2TE_plusAux_rep2", "log2TE_plusAux_rep3"],)
+                                         columns='factor_time', 
+                                         values=values)
     master_df_pivot.columns = [f"{col[0]}_{col[1]}" for col in master_df_pivot.columns]
     master_df_pivot.reset_index(inplace=True)
     _log.info(f"Using log2TE data for {len(master_df_pivot)} transcripts after pivoting")
 
-    # merge log2TE data into output dataframe matching on tx_id, use NaN for missing log2TE values
-    out_df = out_df.merge(master_df_pivot, how='left', left_on='tx_id', right_on='Name')
+    # merge log2TE data into output dataframe matching on tx_id, keeping only rows present in master_df_pivot (inner join)
+    out_df = out_df.merge(master_df_pivot, how='inner', left_on='tx_id', right_on='Name')
     out_df.drop(columns=['Name'], inplace=True)
 
     _log.info(f"Writing output CSV to {args.out_tsv} with {len(out_df)} transcripts")
