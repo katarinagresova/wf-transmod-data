@@ -305,6 +305,12 @@ def main():
     out_df = out_df.merge(master_df_pivot, how='inner', left_on='tx_id', right_on='Name')
     out_df.drop(columns=['Name'], inplace=True)
 
+    # Ensure sequence columns are never NaN in the output; use empty strings instead.
+    seq_cols = ['utr3_sequence', 'cds_sequence', 'utr5_sequence']
+    for col in seq_cols:
+        if col in out_df.columns:
+            out_df[col] = out_df[col].fillna('')
+
     _log.info(f"Writing output CSV to {args.out_tsv} with {len(out_df)} transcripts")
     out_df.to_csv(args.out_tsv, index=False, sep=',')
 

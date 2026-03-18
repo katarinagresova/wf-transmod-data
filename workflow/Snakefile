@@ -1,11 +1,15 @@
-# Load config
-if "--configfile" in sys.argv:
-    i = sys.argv.index("--configfile")
-    config_path = sys.argv[i + 1]
-    configfile: config_path
-else:
-    config_path = "config/config.yaml"
-    configfile: config_path
+# Load config only if not already loaded (e.g., when used as a module)
+import sys
+import os
+
+if not config:  # config is empty when run standalone
+    if "--configfile" in sys.argv:
+        i = sys.argv.index("--configfile")
+        config_path = sys.argv[i + 1]
+        configfile: config_path
+    else:
+        config_path = "config/config.yaml"
+        configfile: config_path
 
 DATA_DIR = config["DATA_DIR"]
 LOG_DIR = config["LOG_DIR"]
