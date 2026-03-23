@@ -291,8 +291,8 @@ def main():
     log2TE_df = pd.read_csv(args.logTE, index_col=0, sep=sep)
     _log.info(f"Loaded log2TE data with {len(log2TE_df)} transcripts from {args.logTE}")
 
-    # set values to all columns starting with `log2TE`, `padj`, `ribo_tpm` or `rna_tpm`
-    values = [col for col in log2TE_df.columns if col.startswith('log2TE') or col.startswith('padj') or col.startswith('ribo_tpm') or col.startswith('rna_tpm')]
+    # set values to all columns starting with `log2TE`, `log2FC`, `padj`, `ribo_tpm` or `rna_tpm`
+    values = [col for col in log2TE_df.columns if col.startswith('log2TE') or col.startswith('log2FC') or col.startswith('padj') or col.startswith('ribo_tpm') or col.startswith('rna_tpm')]
 
     master_df_pivot = log2TE_df.pivot_table(index='Name', 
                                          columns='factor_time', 
