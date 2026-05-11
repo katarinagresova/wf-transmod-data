@@ -23,26 +23,29 @@ TARGETSCAN_SPECIES_ID = MIRNA_TARGETS["species_id"]
 TARGETSCAN_TSV = os.path.join("resources", "Summary_Counts.default_predictions.txt")
 TARGETSCAN_SCORE_COLUMNS = MIRNA_TARGETS["score_columns"]
 
-
-def miRNA_binding_scores_output(score_name):
-    return os.path.join(DATA_DIR, f"HCT116_isoforms_miRNA_binding_scores_{score_name}.csv")
-
 include: "rules/HCT116_isoforms.smk"
 include: "rules/RiboNN_data.smk"
 
 rule all:
-    input: 
-        expand(os.path.join(DATA_DIR, "RiboNN_{dataset}_TE.csv"), dataset=RIBONN_DATASETS.keys()) +
-        [
-            os.path.join(DATA_DIR, "HCT116_isoforms_metadata.csv"),
-            *expand(
-                os.path.join(DATA_DIR, "HCT116_isoforms_TE_{condition}_{timepoint}.csv"),
-                condition=HCT116_ISOFORMS_TE["conditions"],
-                timepoint=HCT116_ISOFORMS_TE["timepoints"],
-            ),
-            TARGETSCAN_TSV,
-            *[miRNA_binding_scores_output(score_name) for score_name in TARGETSCAN_SCORE_COLUMNS],
-        ]
+    input:
+        # RiboNN translation efficiency datasets
+        expand(
+            os.path.join(DATA_DIR, "RiboNN_{dataset}_TE.csv"),
+            dataset=RIBONN_DATASETS.keys()
+        ),
+        # HCT116 isoform metadata
+        os.path.join(DATA_DIR, "HCT116_isoforms_metadata.csv"),
+        # HCT116 translation efficiency measurements across conditions and timepoints
+        expand(
+            os.path.join(DATA_DIR, "HCT116_isoforms_TE_{condition}_{timepoint}.csv"),
+            condition=HCT116_ISOFORMS_TE["conditions"],
+            timepoint=HCT116_ISOFORMS_TE["timepoints"],
+        ),
+        # miRNA binding scores (context scores, conserved sites, weighted)
+        expand(
+            os.path.join(DATA_DIR, "HCT116_isoforms_miRNA_binding_scores_{score_name}.csv"), 
+            score_name=TARGETSCAN_SCORE_COLUMNS.keys()
+        )
 
 rule download_targetscan_summary_counts:
     output:
