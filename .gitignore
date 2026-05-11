@@ -210,3 +210,5 @@ __marimo__/
 .snakemake/
 data/
 logs/
+resources/
+notebooks/
