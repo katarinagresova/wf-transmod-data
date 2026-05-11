@@ -83,7 +83,7 @@ def main():
     else:
         _log.warning("'SYMBOL' column not found in the data.")
 
-    # chceck if there are any missing values in utr5_size, cds_size or utr3_size columns
+    # check if there are any missing values in utr5_size, cds_size or utr3_size columns
     for col in ["utr5_size", "cds_size", "utr3_size"]:
         if col in df.columns:
             missing_count = df[col].isna().sum()
@@ -93,6 +93,14 @@ def main():
             _log.warning(f"Column '{col}' not found in the data.")
 
     if args.add_seqs:
+        required_columns = ["utr5_size", "cds_size", "tx_sequence"]
+        missing = set(required_columns) - set(df.columns)
+        if missing:
+            missing_columns = ", ".join(sorted(missing))
+            _log.error(f"Cannot add sequence columns; missing required input columns: {missing_columns}")
+            raise ValueError(
+                f"Missing required input columns for sequence extraction: {missing_columns}"
+            )
         df['cds_sequence'] = df.apply(extract_cds_sequence, axis=1)
         df['utr5_sequence'] = df.apply(extract_utr5_sequence, axis=1)
         df['utr3_sequence'] = df.apply(extract_utr3_sequence, axis=1)
