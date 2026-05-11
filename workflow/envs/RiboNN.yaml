@@ -2,9 +2,9 @@ name: RiboNN_data
 channels:
   - conda-forge
 dependencies:
-  - python=3.12
-  - requests=2.31.0
+  - python=3.14
+  - requests=2.33.1
   - openpyxl=3.1.5
-  - pip
+  - pip=26.1.1
   - pip:
       - git+https://github.com/katarinagresova/transmod.git@setup

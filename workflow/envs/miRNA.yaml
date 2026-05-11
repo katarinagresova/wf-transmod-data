@@ -2,5 +2,5 @@ name: miRNA
 channels:
   - conda-forge
 dependencies:
-  - python=3.12
-  - pandas
+  - python=3.14
+  - pandas=2.3.3
