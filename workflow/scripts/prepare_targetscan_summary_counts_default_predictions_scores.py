@@ -39,6 +39,66 @@ def set_logging(log_file, log_level):
     _log.addHandler(fh)
 
 
+def resolve_duplicate_gene_mirna_groups(df, score_column):
+    key_cols = [TARGETSCAN_GENE_SYMBOL_COL, TARGETSCAN_MIRNA_FAMILY_COL]
+    duplicate_mask = df.duplicated(subset=key_cols, keep=False)
+    duplicate_rows = df[duplicate_mask]
+
+    if duplicate_rows.empty:
+        _log.info("No duplicate Gene Symbol + miRNA family groups found")
+        return df
+
+    duplicate_groups = duplicate_rows.groupby(key_cols, dropna=False, sort=False)
+    _log.warning(
+        "Found %d duplicate rows across %d Gene Symbol + miRNA family groups",
+        len(duplicate_rows),
+        duplicate_groups.ngroups,
+    )
+
+    collapsed_rows = []
+    grouped = df.groupby(key_cols, dropna=False, sort=False)
+    for (gene_symbol, mirna_family), group in grouped:
+        if len(group) > 1:
+            differing_columns = [
+                col for col in group.columns
+                if group[col].nunique(dropna=False) > 1
+            ]
+            _log.warning(
+                "Duplicate group Gene Symbol='%s', miRNA family='%s', n_rows=%d, differing_columns=%s",
+                gene_symbol,
+                mirna_family,
+                len(group),
+                ", ".join(differing_columns) if differing_columns else "<none>",
+            )
+
+            score_values = pd.to_numeric(group[score_column], errors="coerce")
+            representative_row = group.iloc[0].copy()
+
+            if score_values.nunique(dropna=False) > 1:
+                representative_row[score_column] = score_values.mean()
+                _log.warning(
+                    "Score differs in duplicate group Gene Symbol='%s', miRNA family='%s'; using mean=%s",
+                    gene_symbol,
+                    mirna_family,
+                    representative_row[score_column],
+                )
+            else:
+                representative_row[score_column] = score_values.iloc[0]
+                _log.info(
+                    "Score identical in duplicate group Gene Symbol='%s', miRNA family='%s'; merged without score change",
+                    gene_symbol,
+                    mirna_family,
+                )
+
+            collapsed_rows.append(representative_row)
+        else:
+            collapsed_rows.append(group.iloc[0].copy())
+
+    collapsed_df = pd.DataFrame(collapsed_rows)
+    _log.info("Collapsed TargetScan rows: %d -> %d", len(df), len(collapsed_df))
+    return collapsed_df
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Extract one score column from the TargetScan Summary_Counts file and aggregate by family.")
@@ -104,6 +164,8 @@ def main():
     targetscan_df = targetscan_df[targetscan_df[TARGETSCAN_SPECIES_ID_COL] == args.species_id]
     _log.info(f"Retained {len(targetscan_df)} rows after species filter")
 
+    targetscan_df = resolve_duplicate_gene_mirna_groups(targetscan_df, args.score_column)
+
     _log.info("Joining input CSV on gene_name to TargetScan on Gene Symbol")
     merged_df = input_df.merge(
         targetscan_df[[TARGETSCAN_GENE_SYMBOL_COL, TARGETSCAN_TRANSCRIPT_ID_COL, TARGETSCAN_MIRNA_FAMILY_COL, args.score_column]],
@@ -122,6 +184,14 @@ def main():
         fill_value=0,
     )
     pivot_df = pivot_df.reindex(all_tx_ids, fill_value=0).reset_index()
+
+    # Add gene_name back to output
+    gene_name_map = input_df[[INPUT_TRANSCRIPT_ID_COL, INPUT_GENE_SYMBOL_COL]].drop_duplicates()
+    pivot_df = pivot_df.merge(gene_name_map, on=INPUT_TRANSCRIPT_ID_COL, how="left")
+    # Reorder columns to put gene_name right after tx_id
+    cols = pivot_df.columns.tolist()
+    cols.remove(INPUT_GENE_SYMBOL_COL)
+    pivot_df = pivot_df[[INPUT_TRANSCRIPT_ID_COL, INPUT_GENE_SYMBOL_COL] + cols[1:]]
 
     output_unique_tx = pivot_df[INPUT_TRANSCRIPT_ID_COL].nunique(dropna=False)
     _log.info(f"Output unique {INPUT_TRANSCRIPT_ID_COL} count: {output_unique_tx}")
