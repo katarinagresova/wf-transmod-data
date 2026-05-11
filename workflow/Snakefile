@@ -16,6 +16,7 @@ LOG_DIR = config["LOG_DIR"]
 LOG_LEVEL = config["LOG_LEVEL"]
 RIBONN_DATASETS = config["RIBONN_DATASETS"]
 HCT116_ISOFORMS = config["HCT116_ISOFORMS"]
+HCT116_ISOFORMS_TE = config["HCT116_ISOFORMS_TE"]
 MIRNA_TARGETS = config["MIRNA_TARGETS"]
 TARGETSCAN_URL = MIRNA_TARGETS["url"]
 TARGETSCAN_SPECIES_ID = MIRNA_TARGETS["species_id"]
@@ -26,36 +27,22 @@ TARGETSCAN_SCORE_COLUMNS = MIRNA_TARGETS["score_columns"]
 def miRNA_binding_scores_output(score_name):
     return os.path.join(DATA_DIR, f"HCT116_isoforms_miRNA_binding_scores_{score_name}.csv")
 
+include: "rules/HCT116_isoforms.smk"
 include: "rules/RiboNN_data.smk"
 
 rule all:
     input: 
-        expand(os.path.join(DATA_DIR, "RiboNN_{dataset}.csv"), dataset=RIBONN_DATASETS.keys()) +
+        expand(os.path.join(DATA_DIR, "RiboNN_{dataset}_TE.csv"), dataset=RIBONN_DATASETS.keys()) +
         [
-            os.path.join(DATA_DIR, "HCT116_isoforms.csv"),
+            os.path.join(DATA_DIR, "HCT116_isoforms_metadata.csv"),
+            *expand(
+                os.path.join(DATA_DIR, "HCT116_isoforms_TE_{condition}_{timepoint}.csv"),
+                condition=HCT116_ISOFORMS_TE["conditions"],
+                timepoint=HCT116_ISOFORMS_TE["timepoints"],
+            ),
             TARGETSCAN_TSV,
             *[miRNA_binding_scores_output(score_name) for score_name in TARGETSCAN_SCORE_COLUMNS],
         ]
-
-
-rule prepare_HCT116_isoforms:
-    input:
-        gtf=HCT116_ISOFORMS['gtf'],
-        fasta=HCT116_ISOFORMS['fasta'],
-        logTE=HCT116_ISOFORMS['logTE']
-    output:
-        os.path.join(DATA_DIR, "HCT116_isoforms.csv")
-    params:
-        emit_utrs_without_cds=HCT116_ISOFORMS['emit_utrs_without_cds'],
-        filter_protein_coding=HCT116_ISOFORMS['filter_protein_coding'],
-        ribo_tpm_threshold=HCT116_ISOFORMS['ribo_tpm_threshold'],
-        log_level=LOG_LEVEL
-    conda:
-        "envs/HCT116.yaml"
-    log:
-        os.path.join(LOG_DIR, "prepare_HCT116_isoforms.log")
-    script:
-        "scripts/prepare_HCT116_isoforms.py"
 
 rule download_targetscan_summary_counts:
     output:
@@ -71,7 +58,7 @@ rule download_targetscan_summary_counts:
 
 rule prepare_miRNA_binding_scores:
     input:
-        input_csv=os.path.join(DATA_DIR, "HCT116_isoforms.csv"),
+        input_csv=os.path.join(DATA_DIR, "HCT116_isoforms_metadata.csv"),
         targetscan_tsv=TARGETSCAN_TSV
     output:
         os.path.join(DATA_DIR, "HCT116_isoforms_miRNA_binding_scores_{score_name}.csv")

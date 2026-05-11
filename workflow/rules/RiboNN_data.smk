@@ -9,7 +9,7 @@ def get_ribonn_param(wildcards, key):
 
 rule prepare_RiboNN_data:
     output:
-        os.path.join(DATA_DIR, "RiboNN_{dataset}.csv")
+        os.path.join(DATA_DIR, "RiboNN_{dataset}_TE.csv")
     params:
         url=lambda wildcards: get_ribonn_param(wildcards, 'url'),
         sheet_name=lambda wildcards: get_ribonn_param(wildcards, 'sheet_name'),

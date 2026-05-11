@@ -7,7 +7,7 @@ import argparse
 import logging
 import sys
 
-_log = logging.getLogger("prepare_HCT116_isoforms")
+_log = logging.getLogger("prepare_HCT116_isoforms_metadata")
 
 def set_logging(log_file, log_level):
     _log.setLevel(log_level)
@@ -189,81 +189,11 @@ def build_transcript_row(tx_id, sequences, cds_by_tx):
     }
 
 
-def apply_per_condition_ribo_tpm_filter(df, threshold, logger):
-    """
-    Apply per-condition ribo_tpm filtering.
-    For each condition (factor_time combination), check if max(ribo_tpm_rep1, rep2, rep3) >= threshold.
-    If not, set ALL columns belonging to that condition to NaN.
-    
-    Column naming pattern: {metric}_{treatment}_rep{N}_{factor}_{timepoint}
-    Example: ribo_tpm_minusAux_rep1_eif3d_8h
-    Condition extracted: eif3d_8h
-    
-    Args:
-        df (pd.DataFrame): Input dataframe with merged logTE data
-        threshold (float): Minimum ribo_tpm threshold
-        logger: Logger instance
-    
-    Returns:
-        pd.DataFrame: Filtered dataframe with NaN values for failed conditions
-    """
-    # Find all ribo_tpm columns
-    ribo_tpm_cols = [col for col in df.columns if col.startswith('ribo_tpm_')]
-    if not ribo_tpm_cols:
-        logger.warning("No ribo_tpm columns found; skipping per-condition filtering")
-        return df
-    
-    # Extract unique conditions (factor_time) from ribo_tpm column names
-    # Pattern: ribo_tpm_{treatment}_rep{N}_{factor}_{timepoint}
-    # We extract the part after rep{N}_: the condition is {factor}_{timepoint}
-    condition_pattern = r'ribo_tpm_.+_rep[1-3]_(.+)$'
-    conditions = set()
-    for col in ribo_tpm_cols:
-        match = re.search(condition_pattern, col)
-        if match:
-            conditions.add(match.group(1))
-    conditions = sorted(conditions)
-    logger.info(f"Found {len(conditions)} conditions for per-condition ribo_tpm filtering: {', '.join(conditions)}")
-    
-    # For each condition, apply the filter
-    filtered_pairs = 0
-    for condition in conditions:
-        condition_fails = 0
-        # Find all ribo_tpm columns for this condition (ending with _rep{1,2,3}_{condition})
-        ribo_tpm_rep_cols = [col for col in ribo_tpm_cols if re.match(rf'ribo_tpm_.+_rep[1-3]_{re.escape(condition)}$', col)]
-        
-        if len(ribo_tpm_rep_cols) == 0:
-            logger.warning(f"No ribo_tpm replicate columns found for condition '{condition}'")
-            continue
-        
-        # Get all columns belonging to this condition (any metric ending with _{condition})
-        condition_cols = [col for col in df.columns if col.endswith(f'_{condition}')]
-        if not condition_cols:
-            logger.debug(f"No metric columns found for condition '{condition}'")
-            continue
-        
-        # For each transcript, check if max(ribo_tpm_rep1/2/3) >= threshold
-        # If not, set all condition columns to NaN
-        for idx in df.index:
-            max_ribo_tpm = df.loc[idx, ribo_tpm_rep_cols].max()
-            if pd.isna(max_ribo_tpm) or max_ribo_tpm < threshold:
-                logger.debug(f"Transcript {df.loc[idx, 'tx_id']} fails ribo_tpm filter for condition '{condition}' (max_ribo_tpm={max_ribo_tpm}); setting columns {condition_cols} to NaN")
-                df.loc[idx, condition_cols] = np.nan
-                filtered_pairs += 1
-                condition_fails += 1
-
-        logger.info(f"Condition '{condition}': {condition_fails} transcript-condition pairs failed ribo_tpm filter (threshold={threshold})")
-    
-    logger.info(f"Applied per-condition ribo_tpm filter (threshold={threshold}): {filtered_pairs} transcript-condition pairs filtered to NaN")
-    return df
-
-
 def main():
     parser = argparse.ArgumentParser(
         description="Enrich GTF with transcript coordinates and add utr5/utr3 features")
     parser.add_argument("--gtf", required=True, help="Input GTF file")
     parser.add_argument("--fasta", required=True, help="Input transcriptome FASTA file")
-    parser.add_argument("--logTE", required=True, help="Input logTE file")
     parser.add_argument("--out_tsv", required=True, help="Output CSV file with transcript sequences ")
     parser.add_argument("--log_file", required=False, help="Log file path", default="prepare_HCT116_isoforms.log")
     parser.add_argument("--log_level", required=False, default="INFO")
@@ -271,8 +201,6 @@ def main():
                         help="Emit UTR feature(s) for transcripts that have no CDS (creates a single 'utr' covering the transcript)")
     parser.add_argument("--filter-protein-coding", dest="filter_protein_coding", action="store_true",
                         help="Filter to keep only protein_coding transcripts")
-    parser.add_argument("--ribo-tpm-threshold", dest="ribo_tpm_threshold", type=float, default=5,
-                        help="Minimum ribo_tpm threshold for per-condition filtering (default: 5)")
     args = parser.parse_args()
 
     set_logging(args.log_file, getattr(logging, args.log_level.upper(), logging.INFO))
@@ -378,34 +306,6 @@ def main():
         filtered_count = initial_count - len(out_df)
         _log.info(f"Filtered to {len(out_df)} protein_coding transcripts (removed {filtered_count})")
 
-    sep = '\t' if args.logTE.endswith('.tsv') else ','
-    log2TE_df = pd.read_csv(args.logTE, index_col=0, sep=sep)
-    _log.info(f"Loaded log2TE data with {len(log2TE_df)} rows from {args.logTE}")
-
-    # set values to all columns starting with `log2TE`, `log2FC`, `padj`, `ribo_tpm` or `rna_tpm`
-    values = [col for col in log2TE_df.columns if col.startswith('log2TE') or col.startswith('log2FC') or col.startswith('padj') or col.startswith('ribo_tpm') or col.startswith('rna_tpm')]
-
-    master_df_pivot = log2TE_df.pivot_table(index='Name', 
-                                         columns='factor_time', 
-                                         values=values)
-    master_df_pivot.columns = [f"{col[0]}_{col[1]}" for col in master_df_pivot.columns]
-    master_df_pivot.reset_index(inplace=True)
-    _log.info(f"Using log2TE data for {len(master_df_pivot)} rows after pivoting")
-
-    # merge log2TE data into output dataframe matching on tx_id, keeping only rows present in master_df_pivot (inner join)
-    out_df = out_df.merge(master_df_pivot, how='inner', left_on='tx_id', right_on='Name')
-    out_df.drop(columns=['Name'], inplace=True)
-
-    # Apply per-condition ribo_tpm filter if threshold > 0
-    if args.ribo_tpm_threshold > 0:
-        out_df = apply_per_condition_ribo_tpm_filter(out_df, args.ribo_tpm_threshold, _log)
-
-    # Ensure sequence columns are never NaN in the output; use empty strings instead.
-    seq_cols = ['utr3_sequence', 'cds_sequence', 'utr5_sequence']
-    for col in seq_cols:
-        if col in out_df.columns:
-            out_df[col] = out_df[col].fillna('')
-
     _log.info(f"Writing output CSV to {args.out_tsv} with {len(out_df)} rows")
     out_df.to_csv(args.out_tsv, index=False, sep=',')
 
@@ -417,7 +317,6 @@ if __name__ == "__main__":
         args = [
             "--gtf", snakemake.input.gtf,
             "--fasta", snakemake.input.fasta,
-            "--logTE", snakemake.input.logTE,
             "--out_tsv", snakemake.output[0],
             "--log_file", snakemake.log[0]
         ]
@@ -427,8 +326,6 @@ if __name__ == "__main__":
             args.append("--emit-utrs-without-cds")
         if hasattr(snakemake.params, 'filter_protein_coding') and snakemake.params.filter_protein_coding:
             args.append("--filter-protein-coding")
-        if hasattr(snakemake.params, 'ribo_tpm_threshold'):
-            args += ["--ribo-tpm-threshold", str(snakemake.params.ribo_tpm_threshold)]
         sys.argv[1:] = args
         main()
     else:

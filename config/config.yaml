@@ -13,12 +13,23 @@ RIBONN_DATASETS:
     add_seqs: True
 
 HCT116_ISOFORMS:
-  gtf: /fast/AG_Ohler/frederick/projects/eIF/resources/HCT116_Txome_WT.v1.1_nonAUG.sort.1TxPerGene_collapsed.gtf
-  fasta: /fast/AG_Ohler/frederick/projects/eIF/resources/HCT116_Txome_WT.v1.1_nonAUG.sort.1TxPerGene_collapsed.fa
-  logTE: /fast/AG_Ohler/frederick/projects/eIF/results/20260324-eif-master.csv
+  gtf: resources/HCT116_Txome_WT.v1.1_nonAUG.sort.1TxPerGene_collapsed.gtf
+  fasta: resources/HCT116_Txome_WT.v1.1_nonAUG.sort.1TxPerGene_collapsed.fa
   emit_utrs_without_cds: False
   filter_protein_coding: True
+
+HCT116_ISOFORMS_TE:
+  logTE: "resources/20260324-eif-master.csv"
   ribo_tpm_threshold: 5
+  conditions:
+    - "eif4e"
+    - "eif3d"
+    - "eif4g1"
+    - "eif4g2"
+    - "eif4g3"
+  timepoints:
+    - "4h"
+    - "8h"
 
 MIRNA_TARGETS:
   url: "https://www.targetscan.org/vert_80/vert_80_data_download/Summary_Counts.default_predictions.txt.zip"
