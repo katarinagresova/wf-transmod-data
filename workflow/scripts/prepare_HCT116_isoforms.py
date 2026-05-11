@@ -27,7 +27,8 @@ def set_logging(log_file, log_level):
 
 def load_transcriptome_fasta(fasta_path):
     """Load FASTA and return dict: id -> sequence (str)."""
-    fasta_dict = SeqIO.to_dict(SeqIO.parse(open(fasta_path, 'r'), 'fasta'))
+    with open(fasta_path, 'r') as fh:
+        fasta_dict = SeqIO.to_dict(SeqIO.parse(fh, 'fasta'))
     return {str(k): str(v.seq) for k, v in fasta_dict.items()} 
 
 
@@ -43,10 +44,9 @@ def collect_annotations(df, tx_col='transcript_id', features_of_interest=None):
     """
     if features_of_interest is None:
         features_of_interest = ['exon', 'cds', 'transcript']
-
     if tx_col not in df.columns:
-        _log.warning(f"Transcript id column '{tx_col}' not found in GTF dataframe. Expected it to be present.")
-
+        raise ValueError(f"Transcript id column '{tx_col}' not found in GTF dataframe.")
+    
     df_features = df[df['Feature'].str.lower().isin(features_of_interest)].copy()
     missing_tx_mask = df_features[tx_col].isna()
     missing_tx_count = int(missing_tx_mask.sum())
@@ -299,9 +299,18 @@ def main():
     if missing_in_fasta:
         _log.warning(f"Transcripts with exon annotations missing in FASTA: {len(missing_in_fasta)}")
 
-    transcript_meta = gtf[gtf['Feature'] == 'transcript'].set_index('transcript_id')[[
-        'GENCODE_gene_id', 'GENCODE_transcript_id', 'gene_name', 'transcript_biotype'
-    ]]
+    transcript_meta = (
+        gtf[gtf['Feature'] == 'transcript']
+        .set_index('transcript_id')
+        .reindex(columns=[
+            'GENCODE_gene_id',
+            'GENCODE_transcript_id',
+            'gene_name',
+            'transcript_biotype',
+            'structural_category',
+            'transcript_name'
+        ])
+    )
     rows = []
     no_cds_count = 0
     for tx_id in transcripts_to_process:
@@ -315,7 +324,7 @@ def main():
             # skip transcripts without CDS
             if row['cds_length'] == 0:
                 no_cds_count += 1
-                _log.debug(f"Skipping transcript {tx_id} without CDS as per --emit-utrs-without-cds flag.")
+                _log.debug(f"Skipped {no_cds_count} transcripts without CDS (use --emit-utrs-without-cds to include them).")
                 continue
 
         # Attach metadata if available (use .loc only when present to avoid KeyError)
@@ -325,35 +334,37 @@ def main():
             row['GENCODE_transcript_id'] = meta.get('GENCODE_transcript_id', None)
             row['gene_name'] = meta.get('gene_name', None)
             row['transcript_biotype'] = meta.get('transcript_biotype', None)
+            row['structural_category'] = meta.get('structural_category', None)
+            row['transcript_name'] = meta.get('transcript_name', None)
         else:
             row['GENCODE_gene_id'] = None
             row['GENCODE_transcript_id'] = None
             row['gene_name'] = None
             row['transcript_biotype'] = None
+            row['structural_category'] = None
+            row['transcript_name'] = None
         rows.append(row)
-
     if no_cds_count > 0:
-        _log.info(f"Skipped {no_cds_count} transcripts without CDS as per --emit-utrs-without-cds flag.")
+        _log.info(f"Skipped {no_cds_count} transcripts without CDS (use --emit-utrs-without-cds to include them).")
 
     out_df = pd.DataFrame(
         rows, 
         columns=[
             'transcript_id', 
-            'tx_sequence', 
-            'utr3_sequence', 
-            'cds_sequence', 
-            'utr5_sequence', 
             'tx_length', 
             'utr3_length', 
             'cds_length', 
             'utr5_length', 
             'GENCODE_gene_id', 
-            'GENCODE_gene_name',
             'GENCODE_transcript_id', 
             'gene_name',
             'transcript_biotype',
             'structural_category',
-            'transcript_name'
+            'transcript_name',
+            'tx_sequence', 
+            'utr3_sequence', 
+            'cds_sequence', 
+            'utr5_sequence'
         ]
     )
 

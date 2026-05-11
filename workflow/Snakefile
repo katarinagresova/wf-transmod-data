@@ -13,6 +13,7 @@ if not config:  # config is empty when run standalone
 
 DATA_DIR = config["DATA_DIR"]
 LOG_DIR = config["LOG_DIR"]
+LOG_LEVEL = config["LOG_LEVEL"]
 RIBONN_DATASETS = config["RIBONN_DATASETS"]
 HCT116_ISOFORMS = config["HCT116_ISOFORMS"]
 
@@ -20,7 +21,7 @@ include: "rules/RiboNN_data.smk"
 
 rule all:
     input: 
-        expand(os.path.join(DATA_DIR, "{dataset}.csv"), dataset=RIBONN_DATASETS.keys()),
+        expand(os.path.join(DATA_DIR, "RiboNN_{dataset}.csv"), dataset=RIBONN_DATASETS.keys()) +
         os.path.join(DATA_DIR, "HCT116_isoforms.csv")
 
 
@@ -32,7 +33,10 @@ rule prepare_HCT116_isoforms:
     output:
         os.path.join(DATA_DIR, "HCT116_isoforms.csv")
     params:
-        emit_utrs_without_cds=HCT116_ISOFORMS['emit_utrs_without_cds']
+        emit_utrs_without_cds=HCT116_ISOFORMS['emit_utrs_without_cds'],
+        filter_protein_coding=HCT116_ISOFORMS['filter_protein_coding'],
+        ribo_tpm_threshold=HCT116_ISOFORMS['ribo_tpm_threshold'],
+        log_level=LOG_LEVEL
     conda:
         "envs/HCT116.yaml"
     log:
