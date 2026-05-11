@@ -16,13 +16,26 @@ LOG_DIR = config["LOG_DIR"]
 LOG_LEVEL = config["LOG_LEVEL"]
 RIBONN_DATASETS = config["RIBONN_DATASETS"]
 HCT116_ISOFORMS = config["HCT116_ISOFORMS"]
+MIRNA_TARGETS = config["MIRNA_TARGETS"]
+TARGETSCAN_URL = MIRNA_TARGETS["url"]
+TARGETSCAN_SPECIES_ID = MIRNA_TARGETS["species_id"]
+TARGETSCAN_TSV = os.path.join("resources", "Summary_Counts.default_predictions.txt")
+TARGETSCAN_SCORE_COLUMNS = MIRNA_TARGETS["score_columns"]
+
+
+def miRNA_binding_scores_output(score_name):
+    return os.path.join(DATA_DIR, f"HCT116_isoforms_miRNA_binding_scores_{score_name}.csv")
 
 include: "rules/RiboNN_data.smk"
 
 rule all:
     input: 
         expand(os.path.join(DATA_DIR, "RiboNN_{dataset}.csv"), dataset=RIBONN_DATASETS.keys()) +
-        os.path.join(DATA_DIR, "HCT116_isoforms.csv")
+        [
+            os.path.join(DATA_DIR, "HCT116_isoforms.csv"),
+            TARGETSCAN_TSV,
+            *[miRNA_binding_scores_output(score_name) for score_name in TARGETSCAN_SCORE_COLUMNS],
+        ]
 
 
 rule prepare_HCT116_isoforms:
@@ -43,3 +56,31 @@ rule prepare_HCT116_isoforms:
         os.path.join(LOG_DIR, "prepare_HCT116_isoforms.log")
     script:
         "scripts/prepare_HCT116_isoforms.py"
+
+rule download_targetscan_summary_counts:
+    output:
+        TARGETSCAN_TSV
+    params:
+        url=TARGETSCAN_URL
+    conda:
+        "envs/miRNA.yaml"
+    log:
+        os.path.join(LOG_DIR, "download_targetscan_summary_counts.log")
+    script:
+        "scripts/download_targetscan_summary_counts_default_predictions.py"
+
+rule prepare_miRNA_binding_scores:
+    input:
+        input_csv=os.path.join(DATA_DIR, "HCT116_isoforms.csv"),
+        targetscan_tsv=TARGETSCAN_TSV
+    output:
+        os.path.join(DATA_DIR, "HCT116_isoforms_miRNA_binding_scores_{score_name}.csv")
+    params:
+        score_column=lambda wildcards: TARGETSCAN_SCORE_COLUMNS[wildcards.score_name],
+        species_id=TARGETSCAN_SPECIES_ID
+    conda:
+        "envs/miRNA.yaml"
+    log:
+        os.path.join(LOG_DIR, "prepare_miRNA_binding_scores_{score_name}.log")
+    script:
+        "scripts/prepare_targetscan_summary_counts_default_predictions_scores.py"

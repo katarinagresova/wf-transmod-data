@@ -19,3 +19,11 @@ HCT116_ISOFORMS:
   emit_utrs_without_cds: False
   filter_protein_coding: True
   ribo_tpm_threshold: 5
+
+MIRNA_TARGETS:
+  url: "https://www.targetscan.org/vert_80/vert_80_data_download/Summary_Counts.default_predictions.txt.zip"
+  species_id: 9606  # Human
+  score_columns:
+    conserved_sites: "Total num conserved sites"
+    context_score: "Total context++ score"
+    weighted_context_score: "Cumulative weighted context++ score"
