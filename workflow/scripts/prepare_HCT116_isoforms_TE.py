@@ -23,13 +23,16 @@ def set_logging(log_file, log_level):
     _log.addHandler(fh)
 
 def apply_pair_ribo_tpm_filter(df, condition, timepoint, threshold, logger):
+    """
+    Remove rows where the tpms in the minAux conditions are lower than 5 in any of the replicates
+    """
     pair = f"{condition}_{timepoint}"
     ribo_tpm_cols = [
         col for col in df.columns
-        if col.startswith('ribo_tpm_') and col.endswith(f'_{pair}')
+        if col.startswith('ribo_tpm_minus') and col.endswith(f'_{pair}')
     ]
     if not ribo_tpm_cols:
-        logger.warning(f"No ribo_tpm columns found for pair '{pair}'; skipping filter")
+        logger.warning(f"No ribo_tpm_minus columns found for pair '{pair}'; skipping filter")
         return df
 
     pair_cols = [col for col in df.columns if col.endswith(f'_{pair}')]
@@ -37,16 +40,14 @@ def apply_pair_ribo_tpm_filter(df, condition, timepoint, threshold, logger):
         logger.warning(f"No measurement columns found for pair '{pair}'; skipping filter")
         return df
 
-    max_ribo_tpm = df[ribo_tpm_cols].max(axis=1)
-    keep_mask = max_ribo_tpm.notna() & (max_ribo_tpm >= threshold)
-    filtered_pairs = int((~keep_mask).sum())
-    df = df.loc[keep_mask].copy()
+    # Filter rows where any ribo_tpm_minus value is below the threshold
+    filtered_df = df[df[ribo_tpm_cols].gt(threshold).all(axis=1)]
 
     logger.info(
-        f"Applied ribo_tpm filter for pair '{pair}' (threshold={threshold}): "
-        f"{filtered_pairs} transcript rows removed"
+        f"Applied ribo_tpm_minus filter for pair '{pair}' (threshold={threshold}): "
+        f"{len(df) - len(filtered_df)} transcript rows removed"
     )
-    return df
+    return filtered_df
 
 
 def select_measurement_columns(df):
