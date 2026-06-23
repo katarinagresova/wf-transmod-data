@@ -20,7 +20,7 @@ HCT116_ISOFORMS:
 
 HCT116_ISOFORMS_TE:
   logTE: "resources/20260324-eif-master.csv"
-  ribo_tpm_threshold: 5
+  ribo_tpm_threshold: 5 # Filter out isoforms with ribo_tpm_minus < 5 in any of the replicates for a given condition and timepoint
   conditions:
     - "eif4e"
     - "eif3d"
