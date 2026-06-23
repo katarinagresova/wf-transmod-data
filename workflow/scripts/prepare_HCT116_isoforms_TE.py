@@ -40,8 +40,8 @@ def apply_pair_ribo_tpm_filter(df, condition, timepoint, threshold, logger):
         logger.warning(f"No measurement columns found for pair '{pair}'; skipping filter")
         return df
 
-    # Filter rows where any ribo_tpm_minus value is below the threshold
-    filtered_df = df[df[ribo_tpm_cols].gt(threshold).all(axis=1)]
+    # Filter rows where any ribo_tpm_minus value is below the threshold (keep >= threshold)
+    filtered_df = df[df[ribo_tpm_cols].ge(threshold).all(axis=1)]
 
     logger.info(
         f"Applied ribo_tpm_minus filter for pair '{pair}' (threshold={threshold}): "
