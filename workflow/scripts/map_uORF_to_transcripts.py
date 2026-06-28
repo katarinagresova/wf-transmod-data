@@ -211,7 +211,9 @@ def main():
 
     # Find overlaps
     _log.info("Finding overlaps between uORFs and 5' UTR exons")
+    # get overlaps between uORFs and exons - full containment of uORF within exon
     overlaps = uORFs_pr.join(hct116_exons, how="containment", suffix="_tx")
+    # get overlaps between uORFs and 5' UTR exons - at least partial overlap of uORF with 5' UTR exon
     overlaps_5utr = overlaps.join(hct116_exons_5utr, suffix="_tx_5utr")
 
     # Convert to DataFrame
