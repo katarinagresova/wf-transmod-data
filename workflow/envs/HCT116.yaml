@@ -7,3 +7,4 @@ dependencies:
   - pandas=2.3.3
   - biopython=1.87
   - pyranges=0.1.4
+  - openpyxl

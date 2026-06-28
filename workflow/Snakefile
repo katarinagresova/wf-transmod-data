@@ -18,6 +18,7 @@ RIBONN_DATASETS = config["RIBONN_DATASETS"]
 HCT116_ISOFORMS = config["HCT116_ISOFORMS"]
 HCT116_ISOFORMS_TE = config["HCT116_ISOFORMS_TE"]
 MIRNA_TARGETS = config["MIRNA_TARGETS"]
+UORF_SOURCE = config["UORF_SOURCE"]
 TARGETSCAN_URL = MIRNA_TARGETS["url"]
 TARGETSCAN_SPECIES_ID = MIRNA_TARGETS["species_id"]
 TARGETSCAN_TSV = os.path.join("resources", "Summary_Counts.default_predictions.txt")
@@ -25,6 +26,7 @@ TARGETSCAN_SCORE_COLUMNS = MIRNA_TARGETS["score_columns"]
 
 include: "rules/HCT116_isoforms.smk"
 include: "rules/RiboNN_data.smk"
+include: "rules/uORF_mapping.smk"
 
 rule all:
     input:
@@ -43,9 +45,11 @@ rule all:
         ),
         # miRNA binding scores (context scores, conserved sites, weighted)
         expand(
-            os.path.join(DATA_DIR, "HCT116_isoforms_miRNA_binding_scores_{score_name}.csv"), 
+            os.path.join(DATA_DIR, "HCT116_isoforms_miRNA_binding_scores_{score_name}.csv"),
             score_name=TARGETSCAN_SCORE_COLUMNS.keys()
-        )
+        ),
+        # uORF to transcript mapping
+        os.path.join(DATA_DIR, "HCT116_isoforms_uORF_transcript_mapping.csv")
 
 rule download_targetscan_summary_counts:
     output:

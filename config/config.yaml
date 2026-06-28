@@ -38,3 +38,7 @@ MIRNA_TARGETS:
     conserved_sites: "Total num conserved sites"
     context_score: "Total context++ score"
     weighted_context_score: "Cumulative weighted context++ score"
+
+UORF_SOURCE:
+  url: "https://static-content.springer.com/esm/art%3A10.1038%2Fs41587-022-01369-0/MediaObjects/41587_2022_1369_MOESM2_ESM.xlsx"
+  excel_path: "resources/41587_2022_1369_MOESM2_ESM.xlsx"
