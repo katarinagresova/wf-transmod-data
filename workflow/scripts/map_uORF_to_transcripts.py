@@ -139,9 +139,10 @@ def gtf_to_pr_exons(gtf_path):
         return val
 
     df['transcript_id'] = df['Attributes'].apply(lambda x: get_attr(x, 'transcript_id'))
+    df['gene_name'] = df['Attributes'].apply(lambda x: get_attr(x, 'gene_name'))
 
     exons = df[df['Feature'] == 'exon'][
-        ['Chromosome', 'Start', 'End', 'Strand', 'transcript_id']
+        ['Chromosome', 'Start', 'End', 'Strand', 'transcript_id', 'gene_name']
     ].copy()
     exons['Start'] -= 1
 
@@ -219,14 +220,14 @@ def main():
     # Convert to DataFrame
     mapping_df = overlaps_5utr.df[[
         'orf_name', 'Chromosome', 'Start', 'End', 'Strand',
-        'orf_biotype', 'transcript_id'
+        'orf_biotype', 'transcript_id', 'gene_name'
     ]]
     mapping_df.columns = [
         'orf_name', 'uORF_chrom', 'uORF_start', 'uORF_end', 'uORF_strand',
-        'uORF_biotype', 'transcript_id'
+        'uORF_biotype', 'transcript_id', 'gene_name'
     ]
     mapping_df = mapping_df[[
-        'transcript_id', 'orf_name', 'uORF_chrom', 'uORF_start', 'uORF_end',
+        'transcript_id', 'gene_name', 'orf_name', 'uORF_chrom', 'uORF_start', 'uORF_end',
         'uORF_strand', 'uORF_biotype'
     ]]
 
